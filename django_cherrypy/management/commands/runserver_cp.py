@@ -5,7 +5,7 @@ from django.conf import settings
 from wsgiserver import CherryPyWSGIServer, WSGIPathInfoDispatcher
 from optparse import OptionParser, make_option
 import os.path, sys
-from django_cherrypy_odeon.management.commands import runcpserver
+from django_cherrypy.management.commands import runcpserver
 from django.contrib.staticfiles.handlers import StaticFilesHandler
 
 runcpserver.CPSERVER_HELP = runcpserver.CPSERVER_HELP.replace('runcpserver', 'runserver_cp')
@@ -14,13 +14,13 @@ def start_server_with_admin(options):
     """
     Start CherryPy server
     """
-    
+
     global SERVER
-    
+
     if options['daemonize'] == '1' and options['server_user'] and options['server_group']:
         #ensure the that the daemon runs as specified user
         change_uid_gid(options['server_user'], options['server_group'])
-    
+
     #from cherrypy.wsgiserver import CherryPyWSGIServer as Server
     from wsgiserver import CherryPyWSGIServer as Server
     from django.core.handlers.wsgi import WSGIHandler
@@ -33,7 +33,7 @@ def start_server_with_admin(options):
         (options['host'], int(options['port'])),
         dispatcher,
         numthreads=threads,
-        max=threads, 
+        max=threads,
         server_name=options['server_name'],
         verbose=int(options['verbose']),
         shutdown_timeout = int(options['shutdown_timeout']),
