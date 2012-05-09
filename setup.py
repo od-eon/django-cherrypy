@@ -27,7 +27,7 @@ packages, data_files = [], []
 root_dir = os.path.dirname(__file__)
 if root_dir != '':
     os.chdir(root_dir)
-extensions_dir = 'django_extensions'
+extensions_dir = 'django_cherrypy'
 
 for dirpath, dirnames, filenames in os.walk(extensions_dir):
     # Ignore dirnames that start with '.'
