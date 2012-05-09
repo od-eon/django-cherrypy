@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name='Django Cherrypy',
+    name='django_cherrypy',
     version='0.1dev',
     packages=['django_cherrypy', ],
     license='LICENSE',
@@ -9,5 +9,6 @@ setup(
     long_description=open('README.md').read(),
     author='Calvin Cheng',
     author_email='calvin@calvinx.com',
-    install_requires=[],
+    install_requires=['cherrypy-wsgiserver'],
+    url='https://github.com/od-eon/django_cherrypy',
 )
