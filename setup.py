@@ -41,7 +41,7 @@ for dirpath, dirnames, filenames in os.walk(extensions_dir):
 
 setup(
     name='django-cherrypy',
-    version='0.1dev',
+    version='0.1',
     packages=packages,
     license='LICENSE',
     description='cherrypy, running under django',
@@ -49,5 +49,6 @@ setup(
     author='Calvin Cheng',
     author_email='calvin@calvinx.com',
     install_requires=['cherrypy-wsgiserver'],
+    extra_requires=['newrelic'],
     url='https://github.com/od-eon/django-cherrypy',
 )
