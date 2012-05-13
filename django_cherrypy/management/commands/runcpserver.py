@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
-import logging, sys, os, signal, time, errno
-from socket import gethostname
+#import logging
+import sys
+import os
+import signal
+import time
+import errno
+#from socket import gethostname
 from django.core.management.base import BaseCommand
-from pprint import pprint
+#from pprint import pprint
 
 
 CPSERVER_HELP = r"""
@@ -50,7 +55,7 @@ CPSERVER_OPTIONS = {
     'host': 'localhost',
     'port': 8000,
     'server_name': 'localhost',
-    'threads': 10, 
+    'threads': 10,
     'daemonize': 0,
     'workdir': None,
     'pidfile': None,
@@ -65,6 +70,7 @@ CPSERVER_OPTIONS = {
 
 SERVER = None
 
+
 class Command(BaseCommand):
     help = "CherryPy Server for project. Requires CherryPy."
     args = "[various KEY=val options, use `runcpserver help` for help]"
@@ -78,9 +84,10 @@ class Command(BaseCommand):
         except AttributeError:
             pass
         runcpserver(*args)
-        
+
     def usage(self, subcommand):
         return CPSERVER_HELP
+
 
 def change_uid_gid(uid, gid=None):
     """Try to change UID and GID to the provided values.
@@ -95,27 +102,29 @@ def change_uid_gid(uid, gid=None):
     os.setgid(gid)
     os.setuid(uid)
 
+
 def get_uid_gid(uid, gid=None):
     """Try to change UID and GID to the provided values.
     UID and GID are given as names like 'nobody' not integer.
 
     Src: http://mail.mems-exchange.org/durusmail/quixote-users/4940/1/
     """
-    import pwd, grp
+    import pwd
+    import grp
     uid, default_grp = pwd.getpwnam(uid)[2:4]
     if gid is None:
         gid = default_grp
     else:
         try:
-            gid = grp.getgrnam(gid)[2]            
+            gid = grp.getgrnam(gid)[2]
         except KeyError:
             gid = default_grp
     return (uid, gid)
-    
-    
+
+
 def poll_process(pid):
     """
-    Poll for process with given pid up to 10 times waiting .25 seconds in between each poll. 
+    Poll for process with given pid up to 10 times waiting .25 seconds in between each poll.
     Returns False if the process no longer exists otherwise, True.
     """
     for n in range(10):
@@ -128,12 +137,13 @@ def poll_process(pid):
                 # process has died
                 return False
             else:
-                raise #TODO
+                raise  # TODO
     return True
+
 
 def stop_server(pidfile):
     """
-    Stop process whose pid was written to supplied pidfile. 
+    Stop process whose pid was written to supplied pidfile.
     First try SIGTERM and if it fails, SIGKILL. If process is still running, an exception is raised.
     """
     if SERVER:
@@ -143,15 +153,18 @@ def stop_server(pidfile):
         pid = int(open(pidfile).read())
         try:
             os.kill(pid, signal.SIGTERM)
-        except OSError: #process does not exist
+        except OSError:  # process does not exist
             os.remove(pidfile)
             return
         if poll_process(pid):
             #process didn't exit cleanly, make one last effort to kill it
-            os.kill(pid, signal.SIGKILL)
-            if still_alive(pid):
-                raise OSError, "Process %s did not stop."
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                print "Process {0} did not stop.".format(pid)
+                raise
         os.remove(pidfile)
+
 
 def start_server(options):
     """
@@ -159,29 +172,40 @@ def start_server(options):
     """
 
     global SERVER
-    
+
+    try:
+        import newrelic.agent
+        PATH_TO_NEWRELIC = os.path.join(os.getcwd(), 'newrelic.ini')
+        newrelic.agent.initialize(PATH_TO_NEWRELIC)
+    except:
+        print "To run cherrypy instances with newrelic,"
+        print "(1)  pip install newrelic"
+        print "(2) newrelic-admin generate-config [YOUR_API_KEY] newrelic.ini"
+        print "continuing runcpserver without newrelic..."
+        pass
+
     print 'starting server with options %s' % options
     if options['daemonize'] == '1' and options['server_user'] and options['server_group']:
         #ensure the that the daemon runs as specified user
         change_uid_gid(options['server_user'], options['server_group'])
-    
+
     #from cherrypy.wsgiserver import CherryPyWSGIServer as Server
     from wsgiserver import CherryPyWSGIServer as Server
     from django.core.handlers.wsgi import WSGIHandler
     threads = int(options['threads'])
     SERVER = Server(
         (options['host'], int(options['port'])),
-        WSGIHandler(), 
-        numthreads=threads,
-        max=threads, 
-        server_name=options['server_name'],
-        verbose=int(options['verbose']),
+        WSGIHandler(),
+        numthreads = threads,
+        max = threads,
+        server_name = options['server_name'],
+        verbose = int(options['verbose']),
         shutdown_timeout = int(options['shutdown_timeout']),
         request_queue_size = int(options['request_queue_size'])
     )
     #if options['ssl_certificate'] and options['ssl_private_key']:
         #server.ssl_certificate = options['ssl_certificate']
-        #server.ssl_private_key = options['ssl_private_key']  
+        #server.ssl_private_key = options['ssl_private_key']
     try:
         SERVER.start()
         #from django.utils import autoreload
@@ -197,20 +221,20 @@ def runcpserver(*args):
         if '=' in arg:
             k, v = arg.split('=', 1)
             options[k] = v
-    
+
     if "help" in args:
         print CPSERVER_HELP
         return
-        
+
     if "stop" in args:
         stop_server(options['pidfile'])
         return True
-    
+
     if options['daemonize'] == '1':
         if not options['pidfile']:
             options['pidfile'] = '/var/run/cpserver_%s.pid' % options['port']
-        stop_server(options['pidfile'])     
-       
+        stop_server(options['pidfile'])
+
         from django.utils.daemonize import become_daemon
         if options['workdir']:
             become_daemon(our_home_dir=options['workdir'])
@@ -220,7 +244,7 @@ def runcpserver(*args):
         fp = open(options['pidfile'], 'w')
         fp.write("%d\n" % os.getpid())
         fp.close()
-    
+
     # Start the webserver
     start_server(options)
 
