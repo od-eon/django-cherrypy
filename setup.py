@@ -41,7 +41,7 @@ for dirpath, dirnames, filenames in os.walk(extensions_dir):
 
 setup(
     name='django-cherrypy',
-    version='0.1',
+    version='0.2',
     packages=packages,
     license='LICENSE',
     description='cherrypy, running under django',
