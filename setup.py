@@ -49,6 +49,8 @@ setup(
     author='Calvin Cheng',
     author_email='calvin@calvinx.com',
     install_requires=['cherrypy-wsgiserver'],
-    extra_requires=['newrelic'],
+    extras_require={
+        'newrelic': ['newrelic']
+    },
     url='https://github.com/od-eon/django-cherrypy',
 )
